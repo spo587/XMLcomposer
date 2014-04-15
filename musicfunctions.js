@@ -4,6 +4,18 @@
 //     return dict[step]
 
 // }
+function $(id) {
+    return document.getElementById(id)
+}
+
+
+function testfunction() {
+    $('button').innerHTML = make_for_xml(2,'B',5,4,4)
+}
+
+// function ajaxtest() {
+//     $('button').load('xml_sightreading_test.txt')
+// }
 
 var notesArray = ['C','D','F','G','A','B']
 
@@ -155,22 +167,46 @@ function makeSteps(rhythms, rhythms_nested) {
 
 }
 
+//need function that takes an array like [[1,3],[2,4],[5,6,7]] 
+//and another array of arrays [[2,3],[4,5],[6,4,3]] and makes 
+// new array with same structure as second but with a function of each
+// element on the first one
+
+function changeEach(array_of_arrays, func) {
+    var result = []
+    var ind = 0
+    for (var k=0; k<array_of_arrays.length; k++) {
+        result.push([])
+        for (var i=0; i<array_of_arrays[k].length; i++){
+            result[k].push(func(array_of_arrays[k][i]))
+        }
+        ind += array_of_arrays[k].length
+    }
+    return result
+}
+
 function stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested) {
     //var rhythms = makeRhythms(numMeasures);
     console.log(rhythms);
     var scale = new MajorScale(tonic,step,fifthsCircle);
+    function convertNumToScale(num) {
+        return scale.stepNames[num]
+    }
     console.log(scale)
     var notes = makeSteps(rhythms, rhythms_nested)
     console.log(notes)
-    var readnotes = []
-    var ind = 0
-    for (var k=0; k<notes.length; k++){
-        readnotes.push([])
-        for (var i=0; i<notes[k].length; i++) {
-            readnotes[k].push(scale.stepNames[notes[k][i]])
-        }
-        ind += notes[k].length
-    }
+    readnotes = changeEach(notes,convertNumToScale)
+    console.log(readnotes)
+
+    // var readnotes = []
+    // var ind = 0
+    // for (var k=0; k<notes.length; k++){
+    //     readnotes.push([])
+    //     for (var i=0; i<notes[k].length; i++) {
+    //         readnotes[k].push(scale.stepNames[notes[k][i]])
+    //     }
+    //     ind += notes[k].length
+    // }
     console.log(readnotes)
     return readnotes
 }
@@ -186,7 +222,9 @@ function combineNotesRhythms(tonic,step,fifthsCircle,numMeasures) {
         
 
     var notes = stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested);
-    
+    // function changeNoteToNoteRhythmAlter(note){
+    //     if (note)
+    // }
     result = []
     for (var k=0; k<notes.length; k++){
         result.push([])
@@ -225,9 +263,18 @@ function make_for_xml(tonic,step,fifthsCircle,numMeasures,beats) {
     var combined = [first,second]
     var doc = XMLDoc(combined)
     console.log(renderHTML(doc))
+    return renderHTML(doc)
 }
 
-make_for_xml(2,'B',5,4,4)
+var m = make_for_xml(2,'B',5,4,4)
+
+console.log(m)
+console.log(String(m))
+var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' + String(m)
+
+var encodedXML = encodeURIComponent(xml);
+document.getElementById('downloadLink').setAttribute('href','data:text/xml,' + encodedXML);
+console.log(xml)
 
 // function selectNextStep(scale, currentStep) {
 //     index = scale.indexOf(currentStep);
