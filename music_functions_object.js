@@ -287,10 +287,6 @@ function combineNotesRhythms(tonic,step,fifthsCircle,numMeasures) {
 
 }
 
-function noteOctaveCoversion(noteNumber) {
-    //convert a number that is the key on the piano to an octave number
-
-}
 
 console.log(combineNotesRhythms(2,'B',5,4))
 
@@ -298,7 +294,6 @@ function make_for_xml(tonic,step,fifthsCircle,numMeasures,beats) {
     var notes_rhythms = combineNotesRhythms(tonic,step,fifthsCircle,numMeasures)
     var notes = notes_rhythms['notes']
     var rhythms = notes_rhythms['rhythms']
-    console.log(rhythms)
     var alters = notes_rhythms['alters']
     var octaves = notes_rhythms['octaves']
 
@@ -308,11 +303,18 @@ function make_for_xml(tonic,step,fifthsCircle,numMeasures,beats) {
     for (var i=0; i<notes[0].length; i++)
         firstNotes.push(makenote(notes[0][i],String(octaves[0][i]),rhythms[0][i],'1',alters[0][i])) 
     var first = firstmeasure(String(fifthsCircle),String(beats),firstNotes,'2')
-    var secondMeasureNotes = []
-    for (var i=0; i<notes[1].length; i++)
-        secondMeasureNotes.push(makenote(notes[1][i],String(octaves[1][i]),rhythms[1][i],'1',alters[1][i]))
-    var second = normalMeasure(secondMeasureNotes,'2')
-    var combined = [first,second]
+    var combined = [first]
+    console.log(notes)
+    for (var k=1; k<notes.length; k++) {
+        var measureNotes = [];
+        for (var i=0; i<notes[k].length; i++) {
+            measureNotes.push(makenote(notes[k][i],String(octaves[k][i]),rhythms[k][i],'1',alters[k][i]))
+            console.log(measureNotes.length)
+            
+        }
+        var measure = normalMeasure(measureNotes,'2')
+        combined.push(measure)     
+    }
     var doc = XMLDoc(combined)
     console.log(renderHTML(doc))
     return renderHTML(doc)
