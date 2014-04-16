@@ -173,19 +173,19 @@ function makeSteps(rhythms, rhythms_nested) {
 // new array with same structure as second but with a function of each
 // element on the first one
 
-function combineArrays(arrays) {
-    var len = arguments.length
-    var result = []
-    var ind = 0
-    for (var k=0; k<arguments[0].length; k++){
-        result.push([])
-        for (var i=0; i<arguments.length; i++){
-            result[k].push(arguments[i][k])
-        }
-    }
-    return result
+// function combineArrays(arrays) {
+//     var len = arguments.length
+//     var result = []
+//     var ind = 0
+//     for (var k=0; k<arguments[0].length; k++){
+//         result.push([])
+//         for (var i=0; i<arguments.length; i++){
+//             result[k].push(arguments[i][k])
+//         }
+//     }
+//     return result
 
-}
+// }
 
 //[[3,4],[5,1]],    [[6,7],[8,9]],   [[10,11],[12,13]]
 
@@ -202,6 +202,8 @@ function changeEach(array_of_arrays, func) {
     return result
 }
 
+
+
 function stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested) {
     //var rhythms = makeRhythms(numMeasures);
     console.log(rhythms);
@@ -214,25 +216,26 @@ function stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested) {
     console.log(notes)
     readnotes = changeEach(notes,convertNumToScale)
     function convertScaleDegreeToKeyboardNumber(num){
-        return 47 + majorScale[num-1] + tonic
+        return 48 + majorScale[num-1] + tonic
         
     }
     notesNumbers = changeEach(notes,convertScaleDegreeToKeyboardNumber)   
     console.log(notesNumbers)
-    console.log(readnotes)
-    combinedNotes = combineArrays(readnotes,notes)
+    return {noteNumbers: notesNumbers, readnotes: readnotes}
+    // console.log(readnotes)
+    
 
-    // var readnotes = []
-    // var ind = 0
-    // for (var k=0; k<notes.length; k++){
-    //     readnotes.push([])
-    //     for (var i=0; i<notes[k].length; i++) {
-    //         readnotes[k].push(scale.stepNames[notes[k][i]])
-    //     }
-    //     ind += notes[k].length
-    // }
-    console.log(combinedNotes)
-    return readnotes
+    // // var readnotes = []
+    // // var ind = 0
+    // // for (var k=0; k<notes.length; k++){
+    // //     readnotes.push([])
+    // //     for (var i=0; i<notes[k].length; i++) {
+    // //         readnotes[k].push(scale.stepNames[notes[k][i]])
+    // //     }
+    // //     ind += notes[k].length
+    // // }
+    // console.log(readnotes)
+    // return readnotes
 }
 
 function combineNotesRhythms(tonic,step,fifthsCircle,numMeasures) {
@@ -246,26 +249,39 @@ function combineNotesRhythms(tonic,step,fifthsCircle,numMeasures) {
         
 
     var notes = stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested);
+    var notesReadable = notes['readnotes']
+    var notesNumbers = notes['noteNumbers']
     // function changeNoteToNoteRhythmAlter(note){
     //     if (note)
     // }
-    result = []
-    for (var k=0; k<notes.length; k++){
-        result.push([])
-
-        for (var i=0; i<notes[k].length; i++) {
-            if (notes[k][i][1] == '#')
-                var alter = '1'
-            else if (notes[k][i][1] == 'b')
-                var alter = '-1'
-            else var alter = '0'
-            if (rhythms[i] == 1)
-                var r = 'quarter'
-            else if (rhythms[i] == 2)
-                var r = 'half'
-            result[k].push([notes[k][i][0],r, alter])
-        }
+     
+    function shaveNote(note) {
+        return note[0]
     }
+    
+    function findAlter(note) {
+        if (note[1] == '#')
+            var alter = '1'
+        else if (note[1] == 'b')
+            var alter = '-1'
+        else var alter = '0'
+        return alter
+    }
+    function findOctave(note) {
+        return Math.floor((note+9)/12)-1
+
+    }
+    function convertRhythm(rhythm) {
+        if (rhythm == 1)
+            return 'quarter'
+        else if (rhythm == 2)
+            return 'half'
+    }
+    var rhythmsConverted = changeEach(rhythms_nested,convertRhythm)
+    var alters = changeEach(notesReadable,findAlter)
+    var notesShaved = changeEach(notesReadable,shaveNote)
+    var octaves = changeEach(notesNumbers,findOctave)
+    var result = {rhythms: rhythmsConverted, notes: notesShaved, octaves: octaves, alters: alters}
     console.log(result)
     return result
 
@@ -280,14 +296,21 @@ console.log(combineNotesRhythms(2,'B',5,4))
 
 function make_for_xml(tonic,step,fifthsCircle,numMeasures,beats) {
     var notes_rhythms = combineNotesRhythms(tonic,step,fifthsCircle,numMeasures)
+    var notes = notes_rhythms['notes']
+    var rhythms = notes_rhythms['rhythms']
+    console.log(rhythms)
+    var alters = notes_rhythms['alters']
+    var octaves = notes_rhythms['octaves']
+
+
     //firstNotes = makenote(notes_rhythms[0][0][0],'4',notes_rhythms[0][0][1],'1',notes_rhythms[0][0][2])
     var firstNotes = []
-    for (var i=0; i<notes_rhythms[0].length; i++)
-        firstNotes.push(makenote(notes_rhythms[0][i][0],'5',notes_rhythms[0][i][1],'1',notes_rhythms[0][i][2])) 
+    for (var i=0; i<notes[0].length; i++)
+        firstNotes.push(makenote(notes[0][i],String(octaves[0][i]),rhythms[0][i],'1',alters[0][i])) 
     var first = firstmeasure(String(fifthsCircle),String(beats),firstNotes,'2')
     var secondMeasureNotes = []
-    for (var i=0; i<notes_rhythms[1].length; i++)
-        secondMeasureNotes.push(makenote(notes_rhythms[1][i][0],'5',notes_rhythms[1][i][1],'1',notes_rhythms[1][i][2]))
+    for (var i=0; i<notes[1].length; i++)
+        secondMeasureNotes.push(makenote(notes[1][i],String(octaves[1][i]),rhythms[1][i],'1',alters[1][i]))
     var second = normalMeasure(secondMeasureNotes,'2')
     var combined = [first,second]
     var doc = XMLDoc(combined)
