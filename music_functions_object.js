@@ -42,12 +42,18 @@ Note.prototype.scaleDegree = function(tonic) {
 
 }
 
-function MajorScale(tonic, step, fifthsCircle) {
-    //tonic as 0-11
+function MajorScale(tonic) {
+
+    //tonic as 0-11, 0= a major
+    var tonicConverterforStep = {0: 'A', 1: 'B', 2: 'B', 3:'C', 4:'D', 5:'D', 6:'E', 7:'E', 8:'F', 10:'G',11:'A'}
+    var tonicConverterforFifthsCircle = {0: 3, 1: 10, 2: 5, 3:0, 4:7, 5:2, 6:9, 7:4, 8:11, 10:1, 11:8}
+    this.tonic = tonic
+    this.step = tonicConverterforStep[this.tonic]
+    this.fifthsCircle = tonicConverterforFifthsCircle[this.tonic]
     var reversedict = {0: 'A', 2: 'B', 3:'C', 5:'D', 7:'E', 8:'F', 10:'G'}
     var notesList = ['A','B','C','D','E','F','G']
     var majorScaleArray = [0,2,4,5,7,9,11]
-    var ind = notesList.indexOf(step)
+    var ind = notesList.indexOf(this.step)
     //console.log(ind)
     //console.log(notesList[ind])
     //var newNotesList = []
@@ -59,16 +65,18 @@ function MajorScale(tonic, step, fifthsCircle) {
     //     newNotesList.push(notesList[i+ind])
     // console.log(newNotesList)
     //console.log(notesList)
-    this.tonic = tonic
+    
     this.stepNums = []
     this.stepNames = {}
     for (var i=0; i<7; i++)
         this.stepNums.push((majorScaleArray[i]+tonic)%12)
     //if (fifthsCircle <= 6) {
     for (var i=0; i<7; i++) {
-        if (!reversedict[this.stepNums[i]] && fifthsCircle <= 6)
+        //TODO: fix f# major and c# major bugs.
+        //var extraSharp = reversedict[this.stepNums[i]] + '#'
+        if (!reversedict[this.stepNums[i]] && this.fifthsCircle <= 6)
             this.stepNames[i+1] = notesList[i] + '#'
-        else if (!reversedict[this.stepNums[i]] && fifthsCircle > 6)
+        else if (!reversedict[this.stepNums[i]] && this.fifthsCircle > 6)
             this.stepNames[i+1] = notesList[i] + 'b'
         else
             this.stepNames[i+1] = reversedict[this.stepNums[i]]
@@ -204,10 +212,16 @@ function changeEach(array_of_arrays, func) {
 
 
 
-function stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested) {
+function stepsWithScale(tonic,rhythms,rhythms_nested, RH_or_LH) {
+
     //var rhythms = makeRhythms(numMeasures);
+    if (RH_or_LH == 'LH')
+        var octave = 3
+    else var octave = 4
     console.log(rhythms);
-    var scale = new MajorScale(tonic,step,fifthsCircle);
+    var scale = new MajorScale(tonic);
+    var fifthsCircle = scale.fifthsCircle
+    var step = scale.step
     function convertNumToScale(num) {
         return scale.stepNames[num]
     }
@@ -216,7 +230,8 @@ function stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested) {
     console.log(notes)
     readnotes = changeEach(notes,convertNumToScale)
     function convertScaleDegreeToKeyboardNumber(num){
-        return 48 + majorScale[num-1] + tonic
+        return 12*octave + majorScale[num-1] + tonic
+        
         
     }
     notesNumbers = changeEach(notes,convertScaleDegreeToKeyboardNumber)   
@@ -238,7 +253,7 @@ function stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested) {
     // return readnotes
 }
 
-function combineNotesRhythms(tonic,step,fifthsCircle,numMeasures) {
+function combineNotesRhythms(tonic,numMeasures, RH_or_LH) {
     var rhythms_nested = makeRhythms(numMeasures);
     var rhythms = []
     for (var i=0; i<rhythms_nested.length; i++) {
@@ -248,7 +263,7 @@ function combineNotesRhythms(tonic,step,fifthsCircle,numMeasures) {
     console.log(rhythms)
         
 
-    var notes = stepsWithScale(tonic,step,fifthsCircle,rhythms,rhythms_nested);
+    var notes = stepsWithScale(tonic,rhythms,rhythms_nested, RH_or_LH);
     var notesReadable = notes['readnotes']
     var notesNumbers = notes['noteNumbers']
     // function changeNoteToNoteRhythmAlter(note){
@@ -288,39 +303,59 @@ function combineNotesRhythms(tonic,step,fifthsCircle,numMeasures) {
 }
 
 
-console.log(combineNotesRhythms(2,'B',5,4))
+console.log(combineNotesRhythms(2,4,'LH'))
 
-function make_for_xml(tonic,step,fifthsCircle,numMeasures,beats) {
-    var notes_rhythms = combineNotesRhythms(tonic,step,fifthsCircle,numMeasures)
-    var notes = notes_rhythms['notes']
-    var rhythms = notes_rhythms['rhythms']
-    var alters = notes_rhythms['alters']
-    var octaves = notes_rhythms['octaves']
+function make_for_xml(tonic,numMeasures,beats) {
+    //okay let's make nummeasures divisible by 2, so we can start with one hand and then do the other
+    var notes_rhythms_LH = combineNotesRhythms(tonic,numMeasures/2,'LH')
+    var notes_rhythms_RH = combineNotesRhythms(tonic,numMeasures/2,'RH')
 
+    var notes_RH = notes_rhythms_RH['notes']
+    var notes_LH = notes_rhythms_LH['notes']
+    var rhythms_RH = notes_rhythms_RH['rhythms']
+    var rhythms_LH = notes_rhythms_LH['rhythms']
+    var alters_RH = notes_rhythms_RH['alters']
+    var alters_LH = notes_rhythms_LH['alters']
+    var octaves_LH = notes_rhythms_LH['octaves']
+    var octaves_RH = notes_rhythms_RH['octaves']
+    console.log(notes_rhythms_RH)
+    console.log(notes_rhythms_LH)
 
+    var tonicConverterforFifthsCircle = {0: 3, 1: 10, 2: 5, 3:0, 4:7, 5:2, 6:9, 7:4, 8:11, 10:1, 11:8}
+    var fifthsCircle = tonicConverterforFifthsCircle[tonic]
     //firstNotes = makenote(notes_rhythms[0][0][0],'4',notes_rhythms[0][0][1],'1',notes_rhythms[0][0][2])
     var firstNotes = []
-    for (var i=0; i<notes[0].length; i++)
-        firstNotes.push(makenote(notes[0][i],String(octaves[0][i]),rhythms[0][i],'1',alters[0][i])) 
+    for (var i=0; i<notes_RH[0].length; i++)
+        firstNotes.push(makenote(notes_RH[0][i],String(octaves_RH[0][i]),rhythms_RH[0][i],'1',alters_RH[0][i])) 
     var first = firstmeasure(String(fifthsCircle),String(beats),firstNotes,'2')
     var combined = [first]
-    console.log(notes)
-    for (var k=1; k<notes.length; k++) {
+    for (var k=1; k<notes_RH.length; k++) {
         var measureNotes = [];
-        for (var i=0; i<notes[k].length; i++) {
-            measureNotes.push(makenote(notes[k][i],String(octaves[k][i]),rhythms[k][i],'1',alters[k][i]))
+        for (var i=0; i<notes_RH[k].length; i++) {
+            measureNotes.push(makenote(notes_RH[k][i],String(octaves_RH[k][i]),rhythms_RH[k][i],'1',alters_RH[k][i]))
             console.log(measureNotes.length)
             
         }
         var measure = normalMeasure(measureNotes,'2')
         combined.push(measure)     
     }
+    for (var k=0; k<notes_LH.length; k++) {
+        var measureNotes = [];
+        for (var i=0; i<notes_LH[k].length; i++) {
+            measureNotes.push(makenote(notes_LH[k][i],String(octaves_LH[k][i]),rhythms_LH[k][i],'2',alters_LH[k][i]))
+            console.log(measureNotes.length)
+            
+        }
+        var measure = normalMeasure(measureNotes,'2')
+        combined.push(measure)     
+    }
+
     var doc = XMLDoc(combined)
     console.log(renderHTML(doc))
     return renderHTML(doc)
 }
 
-var m = make_for_xml(2,'B',5,4,4)
+var m = make_for_xml(5,8,4)   
 
 console.log(m)
 console.log(String(m))
@@ -328,6 +363,7 @@ var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLI
 
 var encodedXML = encodeURIComponent(xml);
 document.getElementById('downloadLink').setAttribute('href','data:text/xml,' + encodedXML);
+
 console.log(xml)
 
 // function selectNextStep(scale, currentStep) {
