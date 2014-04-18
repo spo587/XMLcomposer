@@ -1,37 +1,33 @@
-
-function MajorScale(tonic, quality) {
-    //tonic as 0-11, 0=a major
+function Scale(fifthsCircle, quality) {
+    //fifthsCircle is number of fifths away from middle c. <0 for flat keys
     // quality is minor = 'm', major = 'M'
-    // make so it works for c# major and f# major??
+    this.fifthsCircle = String(fifthsCircle);
+    var findRelMajFromFifths = {'0': 0, '-5': 1, '2': 2, '-3': 3, '4': 4, '-1': 5, '6': 6, '1': 7, '-4': 8, '3': 9, '-2':10, '5': 11};
     this.quality = quality 
-    this.tonic = tonic
-    var tonicConverterforStep = {9: 'A', 10: 'B', 11: 'B', 0:'C', 1:'D', 2:'D', 3:'E', 4:'E', 5:'F', 7:'G',8:'A'}   
+    var relativeMajorNumber = findRelMajFromFifths[this.fifthsCircle]
     if (quality == 'm')
-        var temptonic = tonic + 3
-    else var temptonic = tonic
-    var step = tonicConverterforStep[temptonic]
-    //use step variable and temptonic for the relative major to get steps and key signature
-    this.step = tonicConverterforStep[this.tonic]
-    var tonicConverterforFifthsCircle = {0: 0, 1: -5, 2: 2, 3:-3, 4:4, 5:-1, 6:6, 7:1, 8:-4, 9:3, 10:-2, 11:5}
-    this.fifthsCircle = tonicConverterforFifthsCircle[temptonic]
+        this.tonicNumber = (relativeMajorNumber + 9)%12
+    else this.tonicNumber = relativeMajorNumber
+    var tonicConverterforStep = {9: 'A', 10: 'B', 11: 'B', 0:'C', 1:'D', 2:'D', 3:'E', 4:'E', 5:'F', 7:'G',8:'A'}   
+    var relativeMajor = tonicConverterforStep[relativeMajorNumber]
+    this.step = tonicConverterforStep[this.tonicNumber]
     var reversedict = {0: 'C', 2: 'D', 4:'E', 5:'F', 7:'G', 9:'A', 11:'B'}
     var notesList = ['C','D','E','F','G','A','B']
-    var majorScaleArray = [0,2,4,5,7,9,11]
-    var ind = notesList.indexOf(step)
+    this.majorScaleArray = [0,2,4,5,7,9,11]
+    var ind = notesList.indexOf(relativeMajor)
     for (var i = 0; i<ind; i++){
         notesList.push(notesList.shift())  
     }
     this.stepNums = []
     this.stepNames = {}
     for (var i=0; i<7; i++)
-        this.stepNums.push((majorScaleArray[i]+temptonic)%12)
+        this.stepNums.push((this.majorScaleArray[i]+relativeMajorNumber)%12)
     if (quality == 'm'){
         for (var i=0; i<5; i++){
             this.stepNums.push(this.stepNums.shift())
             notesList.push(notesList.shift())
             } 
         }   
-    console.log(notesList)
     for (var i=0; i<7; i++) {
         //TODO: fix f# major and c# major bugs.
         if (!reversedict[this.stepNums[i]] && this.fifthsCircle > 0)
@@ -43,27 +39,21 @@ function MajorScale(tonic, quality) {
         }    
 }
 
-
 function NextStepDegree(currentScaleDegree) {
     //for five finger position only
     var randNum = Math.random()
-    if (currentScaleDegree == 1)
-        return randNum < 0.2 ? currentScaleDegree : currentScaleDegree+1
-    else if (currentScaleDegree == 5)
-        return randNum < 0.2 ? currentScaleDegree : currentScaleDegree-1
+    if (currentScaleDegree == 1) return randNum < 0.2 ? currentScaleDegree : currentScaleDegree+1;
+    else if (currentScaleDegree == 5) return randNum < 0.2 ? currentScaleDegree : currentScaleDegree-1;
     else {
-        if (randNum <= 0.4)
-            return currentScaleDegree-1
-        else if (0.4<randNum<0.6)
-            return currentScaleDegree
-        else return currentScaleDegree + 1
+        if (randNum <= 0.4) return currentScaleDegree-1;
+        else if (0.4<randNum<0.6) return currentScaleDegree;
+        else return currentScaleDegree + 1;
     }
 }
 
 function makeRhythms(numMeasures, beatsPer) {
     // 4/4 or 3/4 time only
-    if (beatsPer == undefined)
-        var beatsPer = 4
+    if (beatsPer == undefined) var beatsPer = 4;
     var rhythms = [];
     for (var i=0; i<numMeasures; i++)
         rhythms.push([])
@@ -93,16 +83,18 @@ function makeRhythms(numMeasures, beatsPer) {
     return rhythms
 }
 
-
-function makeSteps(rhythms, rhythms_nested) {
-    var numnotes = rhythms.length
+function makeSteps(rhythms_nested) {
+    var numnotes = 0
+    for (var i=0; i<rhythms_nested.length; i++) {
+        numnotes += rhythms_nested[i].length    //find out how many total notes there are in rhythms array
+    }
     var notes = [1] // this ensures melody will always end on tonic. necessary?
     for (var i=1; i<numnotes; i++)
-        notes.push(NextStepDegree(notes[i-1]))
+        notes.push(NextStepDegree(notes[i-1]))  //build simple array of scale degrees
     notes.reverse()
     var notes_with_meter = []
     // put the steps in nested arrays, each inner array for a single measure
-    var ind = 0
+    var ind = 0;
     for (var i=0; i<rhythms_nested.length; i++) {
         notes_with_meter.push([])
         for (var j=0; j<rhythms_nested[i].length; j++) {
@@ -110,10 +102,8 @@ function makeSteps(rhythms, rhythms_nested) {
         }
         ind += rhythms_nested[i].length
     }
-    console.log(notes_with_meter)
     return notes_with_meter
 }
-
 
 function changeEach(array_of_arrays, func) {
     var result = []
@@ -128,136 +118,93 @@ function changeEach(array_of_arrays, func) {
     return result
 }
 
-function stepsWithScale(tonic,rhythms,rhythms_nested, RH_or_LH, quality) {
+function stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality) {
     //var rhythms = makeRhythms(numMeasures);
-    if (RH_or_LH == 'LH' && octave == undefined)
-        var octave = 2
-    else if (octave == undefined)
-        var octave = 4
-    console.log(rhythms);
-    var scale = new MajorScale(tonic, quality);
-    var fifthsCircle = scale.fifthsCircle
+    if (RH_or_LH == 'LH' && octave == undefined) var octave = 2;
+    else if (octave == undefined) var octave = 4;
+    var scale = new Scale(fifthsCircle, quality);
     var step = scale.step
     function convertNumToScale(num) {
         return scale.stepNames[num]
     }
-    console.log(scale)
-    var notes = makeSteps(rhythms, rhythms_nested)
-    console.log(notes)
-    readnotes = changeEach(notes,convertNumToScale)
+    var notes = makeSteps(rhythms_nested)
+    var readnotes = changeEach(notes,convertNumToScale)
     function convertScaleDegreeToKeyboardNumber(num){
-        var majorScale =  [0,2,4,5,7,9,11]
-        return 12*octave + majorScale[num-1] + tonic     
+        return 12*octave + scale.majorScaleArray[num-1] + scale.tonicNumber     
     }
-    notesNumbers = changeEach(notes,convertScaleDegreeToKeyboardNumber)   
-    console.log(notesNumbers)
+    var notesNumbers = changeEach(notes,convertScaleDegreeToKeyboardNumber)   
     return {noteNumbers: notesNumbers, readnotes: readnotes}
 }
 
-function combineNotesRhythms(tonic, numMeasures, RH_or_LH, beatsPer, quality) {
+function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, quality) {
     var rhythms_nested = makeRhythms(numMeasures, beatsPer);
-    var rhythms = []
-    for (var i=0; i<rhythms_nested.length; i++) {
-        for (var j=0; j<rhythms_nested[i].length; j++)
-            rhythms.push(rhythms_nested[i][j])
-    }
-    console.log(rhythms)
-        
-
-    var notes = stepsWithScale(tonic,rhythms,rhythms_nested, RH_or_LH, quality);
+    var notes = stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality);
     var notesReadable = notes['readnotes']
     var notesNumbers = notes['noteNumbers']
-
     function shaveNote(note) {
         return note[0]
-    }
-    
+    } 
     function findAlter(note) {
-        if (note[1] == '#')
-            var alter = '1'
-        else if (note[1] == 'b')
-            var alter = '-1'
-        else var alter = '0'
+        if (note[1] == '#') var alter = '1';
+        else if (note[1] == 'b') var alter = '-1';
+        else var alter = '0';
         return alter
     }
     function findOctave(note) {
         return Math.floor((note)/12)
-
     }
     function convertRhythm(rhythm) {
-        if (rhythm == 1)
-            return 'quarter'
-        else if (rhythm == 2)
-            return 'half'
+        if (rhythm == 1) return 'quarter';
+        else if (rhythm == 2) return 'half';
     }
     var rhythmsConverted = changeEach(rhythms_nested,convertRhythm)
     var alters = changeEach(notesReadable,findAlter)
     var notesShaved = changeEach(notesReadable,shaveNote)
     var octaves = changeEach(notesNumbers,findOctave)
-    var result = {rhythms: rhythmsConverted, notes: notesShaved, octaves: octaves, alters: alters}
-    console.log(result)
+    if (RH_or_LH == 'RH') {var staff = '1'}
+    else var staff = '2'
+    function makeStaffs() {return staff}
+    var staffs = changeEach(rhythms_nested, makeStaffs)
+    var result = {rhythms: rhythmsConverted, notes: notesShaved, octaves: octaves, alters: alters, staff: staffs}
     return result
-
 }
 
-console.log(combineNotesRhythms(2,4,'LH',4))
-
-function make_for_xml(tonic,numMeasures,beats,quality) {
+function make_for_xml(fifthsCircle,numMeasures,beats,quality) {
     //okay let's make nummeasures divisible by 2, so we can start with one hand and then do the other
-    var notes_rhythms_LH = combineNotesRhythms((tonic+7)%12,numMeasures/2,'LH',beats,quality)
-    var notes_rhythms_RH = combineNotesRhythms(tonic,numMeasures/2,'RH', beats,quality)
+    var notes_rhythms_LH = combineNotesRhythms(fifthsCircle+1,numMeasures/2,'LH',beats,quality)
+    var notes_rhythms_RH = combineNotesRhythms(fifthsCircle,numMeasures/2,'RH', beats,quality)
+    function addNestedArrays(arr1, arr2) {
+        for (var i=0; i<arr2.length; i++) {arr1.push(arr2[i])}
+        return arr1
+    }
+    var notes = addNestedArrays(notes_rhythms_RH['notes'],notes_rhythms_LH['notes'])
+    var rhythms = addNestedArrays(notes_rhythms_RH['rhythms'],notes_rhythms_LH['rhythms'])
+    var alters = addNestedArrays(notes_rhythms_RH['alters'],notes_rhythms_LH['alters'])
+    var octaves = addNestedArrays(notes_rhythms_RH['octaves'],notes_rhythms_LH['octaves'])
+    var staffs = addNestedArrays(notes_rhythms_RH['staff'],notes_rhythms_LH['staff'])
+    console.log(staffs)
 
-    var notes_RH = notes_rhythms_RH['notes']
-    var notes_LH = notes_rhythms_LH['notes']
-    var rhythms_RH = notes_rhythms_RH['rhythms']
-    var rhythms_LH = notes_rhythms_LH['rhythms']
-    var alters_RH = notes_rhythms_RH['alters']
-    var alters_LH = notes_rhythms_LH['alters']
-    var octaves_LH = notes_rhythms_LH['octaves']
-    var octaves_RH = notes_rhythms_RH['octaves']
-    console.log(notes_rhythms_RH)
-    console.log(notes_rhythms_LH)
-
-    var scale = new MajorScale(tonic, quality)
-
-    //ar tonicConverterforFifthsCircle = {0: 3, 1: 10, 2: 5, 3:0, 4:7, 5:2, 6:9, 7:4, 8:11, 10:1, 11:8}
-    var fifthsCircle = scale.fifthsCircle
-    //firstNotes = makenote(notes_rhythms[0][0][0],'4',notes_rhythms[0][0][1],'1',notes_rhythms[0][0][2])
     var firstNotes = []
-    for (var i=0; i<notes_RH[0].length; i++)
-        firstNotes.push(makenote(notes_RH[0][i],String(octaves_RH[0][i]),rhythms_RH[0][i],'1',alters_RH[0][i])) 
+    for (var i=0; i<notes[0].length; i++)
+        firstNotes.push(makenote(notes[0][i],String(octaves[0][i]),rhythms[0][i],staffs[0][i],alters[0][i])) 
     var first = firstmeasure(String(fifthsCircle),String(beats),firstNotes,'2')
     var combined = [first]
-    for (var k=1; k<notes_RH.length; k++) {
+    for (var k=1; k<notes.length; k++) {
         var measureNotes = [];
-        for (var i=0; i<notes_RH[k].length; i++) {
-            measureNotes.push(makenote(notes_RH[k][i],String(octaves_RH[k][i]),rhythms_RH[k][i],'1',alters_RH[k][i]))
-            console.log(measureNotes.length)
-            
+        for (var i=0; i<notes[k].length; i++) {
+            measureNotes.push(makenote(notes[k][i],String(octaves[k][i]),rhythms[k][i],staffs[k][i],alters[k][i]))      
         }
         var measure = normalMeasure(measureNotes,'2')
         combined.push(measure)     
     }
-    for (var k=0; k<notes_LH.length; k++) {
-        var measureNotes = [];
-        for (var i=0; i<notes_LH[k].length; i++) {
-            measureNotes.push(makenote(notes_LH[k][i],String(octaves_LH[k][i]),rhythms_LH[k][i],'2',alters_LH[k][i]))
-            console.log(measureNotes.length)
-            
-        }
-        var measure = normalMeasure(measureNotes,'2')
-        combined.push(measure)     
-    }
-
     var doc = XMLDoc(combined)
-    console.log(renderHTML(doc))
     return renderHTML(doc)
 }
 
-var m = make_for_xml(5,8,3)   
+// var m = make_for_xml(5,8,3)   
 
-console.log(m)
-console.log(String(m))
+// console.log(m)
+// console.log(String(m))
 // var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' + String(m)
 
 // var encodedXML = encodeURIComponent(xml);
@@ -267,7 +214,7 @@ console.log(String(m))
 
 var genXML = function(){
     var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' 
-    + String(make_for_xml(7,8,4,'M'))
+    + String(make_for_xml(-2,8,4,'M'))
     var encodedXML = encodeURIComponent(xml);               
     document.getElementById('downloadLink').setAttribute('href','data:text/xml,' + encodedXML);
 };
@@ -275,27 +222,6 @@ var genXML = function(){
 document.getElementById("downloadLink").onClick = genXML;
 genXML();
 
-
-// var down = function() {
-//    var data = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' + String(make_for_xml(5,8,4))
-//    document.getElementById('downloadLink') = 'data:text/xml,' + encodeURIComponent(data);
-// }
-
-// function selectNextStep(scale, currentStep) {
-//     index = scale.indexOf(currentStep);
-//     var randNum = Math.random();
-//     if (index == 0) 
-//         return randNum < 0.5 ? scale[index] : scale[index+1]
-//     else if (index == scale.length-1)
-//         return randNum < 0.5 ? scale[index] : scale[index-1]
-//     else {
-//         if (randNum < 0.33)
-//             return scale[index-1]
-//         else if (0.33 <= randNum < 0.66)
-//             return scale[index]
-//         else return scale[index+1]
-//     }
-// }
 
 function setNodeAttribute(node, attribute, value) {
   if (attribute == "class")
@@ -402,25 +328,6 @@ function makenote(step,octave,type,staff,alter) {
     tag('octave',[octave]),tag('alter',[alter])]),tag('type',[type]),tag('staff',[staff])])
 }
 
-// function makeNoteFromArray(notearray) {
-//   //for an array that's a single note only
-//   var step = notearray[0][0]
-//   if (notearray[0][1] == '#')
-//     var alter = '1'
-//   else if (notearray[0][1] == 'b')
-//     var alter = '-1'
-//   else 
-//     var alter = '0'
-//   if (notearray[1] == 1)
-//     var type = 'quarter'
-//   else if (notearray[1] == 2)
-//     var type = 'half'
-//   var octave = '4'
-//   var staff = '1'
-//   return makenote(step, octave, type, staff, alter)
-
-// }
-
 
 function padNotes(notes) {
     //makes the first element null to be filled in later if it's the first measure
@@ -433,11 +340,8 @@ function padNotes(notes) {
     }
     copynotes[0] = null
   }
-  return copynotes
-    
+  return copynotes   
 }
-
-
 
 function firstmeasure(keyFifths,beats,notes,numStaves) {
   newnotes = padNotes(notes)
