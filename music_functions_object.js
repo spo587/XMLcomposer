@@ -1,5 +1,6 @@
 function Scale(fifthsCircle, quality) {
-    //fifthsCircle is number of fifths away from middle c. <0 for flat keys
+    //this constructor is a fucking mess. makes a scale object, major minor
+    //fifthsCircle is number of fifths away from middle c. <0 for flat keys,
     // quality is minor = 'm', major = 'M'
     this.fifthsCircle = String(fifthsCircle);
     var findRelMajFromFifths = {'0': 0, '-5': 1, '2': 2, '-3': 3, '4': 4, '-1': 5, '6': 6, '1': 7, '-4': 8, '3': 9, '-2':10, '5': 11};
@@ -40,7 +41,8 @@ function Scale(fifthsCircle, quality) {
 }
 
 function NextStepDegree(currentScaleDegree) {
-    //for five finger position only
+    //for five finger position only. gives you the next scale degree, based on a current one. 
+    // up a step, down a step, or repeat
     var randNum = Math.random()
     if (currentScaleDegree == 1) return randNum < 0.2 ? currentScaleDegree : currentScaleDegree+1;
     else if (currentScaleDegree == 5) return randNum < 0.2 ? currentScaleDegree : currentScaleDegree-1;
@@ -52,7 +54,8 @@ function NextStepDegree(currentScaleDegree) {
 }
 
 function makeRhythms(numMeasures, beatsPer) {
-    // 4/4 or 3/4 time only
+    // 4/4 or 3/4 time only. quarter notes only on syncopated beats. returns 
+    //a nested array with the rhythms in each measure
     if (beatsPer == undefined) var beatsPer = 4;
     var rhythms = [];
     for (var i=0; i<numMeasures; i++)
@@ -84,6 +87,8 @@ function makeRhythms(numMeasures, beatsPer) {
 }
 
 function makeSteps(rhythms_nested) {
+    //combines the rhythms and generates a bunch of scale degrees to go along with,
+    // returned in a nested array
     var numnotes = 0
     for (var i=0; i<rhythms_nested.length; i++) {
         numnotes += rhythms_nested[i].length    //find out how many total notes there are in rhythms array
@@ -106,6 +111,8 @@ function makeSteps(rhythms_nested) {
 }
 
 function changeEach(array_of_arrays, func) {
+    //helper function for later. takes a nested array and applies a function
+    // to each inner element
     var result = []
     var ind = 0
     for (var k=0; k<array_of_arrays.length; k++) {
@@ -119,7 +126,7 @@ function changeEach(array_of_arrays, func) {
 }
 
 function stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality) {
-    //var rhythms = makeRhythms(numMeasures);
+    // makes scale degrees and applies the rhythm and tonality to them
     if (RH_or_LH == 'LH' && octave == undefined) var octave = 2;
     else if (octave == undefined) var octave = 4;
     var scale = new Scale(fifthsCircle, quality);
@@ -137,6 +144,7 @@ function stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality) {
 }
 
 function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, quality) {
+    // returns an object with notes, rhythms, staff based on which hand, and accidentals for each note
     var rhythms_nested = makeRhythms(numMeasures, beatsPer);
     var notes = stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality);
     var notesReadable = notes['readnotes']
@@ -170,7 +178,8 @@ function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, qual
 }
 
 function make_for_xml(fifthsCircle,numMeasures,beats,quality) {
-    //okay let's make nummeasures divisible by 2, so we can start with one hand and then do the other
+    // generates the xml string. see functions at the bottom of this document for how
+    // it makes the xml objects
     var notes_rhythms_LH = combineNotesRhythms(fifthsCircle+1,numMeasures/2,'LH',beats,quality)
     var notes_rhythms_RH = combineNotesRhythms(fifthsCircle,numMeasures/2,'RH', beats,quality)
     function addNestedArrays(arr1, arr2) {
@@ -212,7 +221,11 @@ function make_for_xml(fifthsCircle,numMeasures,beats,quality) {
 
 // console.log(xml)
 
+
+//here's the part that makes the link. i don't compeltely understand it.
+
 var genXML = function(){
+    // the xml variable contains the string header to the xml file + the part generated in the code above
     var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' 
     + String(make_for_xml(-2,8,4,'M'))
     var encodedXML = encodeURIComponent(xml);               
@@ -222,6 +235,8 @@ var genXML = function(){
 document.getElementById("downloadLink").onClick = genXML;
 genXML();
 
+
+//below is a bunch of functions borrowed from eloquent javascript
 
 function setNodeAttribute(node, attribute, value) {
   if (attribute == "class")
@@ -316,6 +331,9 @@ function tag(name, content, attributes) {
   return {name: name, attributes: attributes, content: content};
 }
 
+// these are the functions i made for making the musicXML file. generic functions for dealing with
+// input notes and making a piano score that can take a time signature, key signature and shit 
+// like that
  
 function XMLDoc(bodyContent) {
   return tag('score-partwise',[tag('part-list',[tag('score-part',[],{'id':'P1'})]),tag('part',bodyContent,{'id':'P1'})],{'version': '2.0'})
