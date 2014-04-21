@@ -232,8 +232,8 @@ var genXML = function(){
     document.getElementById('downloadLink').setAttribute('href','data:text/xml,' + encodedXML);
 };
  
-document.getElementById("downloadLink").onClick = genXML;
-genXML();
+document.getElementById("downloadLink").onclick = genXML;
+
 
 
 //below is a bunch of functions borrowed from eloquent javascript
