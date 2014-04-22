@@ -100,6 +100,7 @@ function makeRhythms(numMeasures, beatsPer) {
             beat += 1
         }
     }
+    rhythms.slice(-1)[0][0] = beatsPer;
     return rhythms
 }
 
@@ -191,6 +192,7 @@ function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, qual
     function convertRhythm(rhythm) {
         if (rhythm == 1) return 'quarter';
         else if (rhythm == 2) return 'half';
+        else if (rhythm == 4) return 'whole';
     }
     var rhythmsConverted = changeEach(rhythms_nested,convertRhythm)
     var alters = changeEach(notesReadable,findAlter)
@@ -204,11 +206,32 @@ function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, qual
     return result
 }
 
-function make_for_xml(fifthsCircle,numMeasures,beats,quality,pinkyDegree, level, beginning_or_not) {
+function make_for_xml(level, beginning_or_not, pinkyDegDiff, pinkyDegree, fifthsCircle, quality, numMeasures,beats) {
     // generates the xml string. see functions at the bottom of this document for how
     // it makes the xml objects
+    var randNum = Math.random()
+    var randNum2 = Math.random()
+    var possFifthsLevOne = [0,1,-1]
+    var possibleFifths = [-3,-2,-1,0,1,2,3,4]
+    if (fifthsCircle == undefined) {
+        if (level == 1) var fifthsCircle = possFifthsLevOne[Math.floor(Math.random()*possFifthsLevOne.length)];
+        else var fifthsCircle = possibleFifths[Math.floor(Math.random() * possibleFifths.length)];
+    }
+    if (pinkyDegDiff == undefined) var pinkyDegDiff = 0;
+    if (numMeasures == undefined) var numMeasures = 8;
+    if (beats == undefined) var beats = randNum <0.3 ? 3: 4;
+    if (quality == undefined) {
+        if (level == 1) {
+            var quality = fifthsCircle == -1 ? 'm' : undefined;
+            var quality = fifthsCircle == 1 ? 'M' : undefined;
+            var quality = (fifthsCircle == 0 && randNum2 < 0.3) ? 'm' : 'M';
+        }
+        else var quality = randNum2 < 0.3 ? 'm' : 'M';
+    }
+    if (pinkyDegree == undefined) var pinkyDegree = 4
+
     var notes_rhythms_LH = combineNotesRhythms(fifthsCircle,numMeasures/2,'LH',beats,quality,pinkyDegree, level)
-    var notes_rhythms_RH = combineNotesRhythms(fifthsCircle,numMeasures/2,'RH', beats,quality, pinkyDegree, level)
+    var notes_rhythms_RH = combineNotesRhythms(fifthsCircle,numMeasures/2,'RH', beats,quality, pinkyDegree+pinkyDegDiff, level)
     function addNestedArrays(arr1, arr2) {
         for (var i=0; i<arr2.length; i++) {arr1.push(arr2[i])}
         return arr1
@@ -222,10 +245,10 @@ function make_for_xml(fifthsCircle,numMeasures,beats,quality,pinkyDegree, level,
     var firstNotes = []
     for (var i=0; i<notes[0].length; i++)
         firstNotes.push(makenote(notes[0][i],String(octaves[0][i]),rhythms[0][i],staffs[0][i],alters[0][i])) 
-    if (beginning_or_not == 'beginning') {
-        var first = firstmeasure(String(fifthsCircle),String(beats),firstNotes,'2')
+    if (beginning_or_not == 'continuation') {
+        var first = normalMeasure(firstNotes, String(measureNumber))
     }
-    else var first = normalMeasure(firstNotes, String(measureNumber));
+    else var first = firstmeasure(String(fifthsCircle),String(beats),firstNotes,'2');
     measureNumber += 1
 
     var combined = [first]
@@ -281,11 +304,11 @@ function concatMultipleArrays(arrays) {
 
 var genXML = function(){
     // the xml variable contains the string header to the xml file + the part generated in the code above
-    var a = make_for_xml(0,8,4,'M', 4,2,'beginning');
+    var a = make_for_xml(1);
     //console.log(a);
-    var b = make_for_xml(-1,8,4,'m',4,2);
+    var b = make_for_xml(1);
     var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' 
-    + String(xml_that_shit(a.concat(b)))
+    + String(xml_that_shit(a))
     var encodedXML = encodeURIComponent(xml);               
     document.getElementById('downloadLink').setAttribute('href','data:text/xml,' + encodedXML);
 };
