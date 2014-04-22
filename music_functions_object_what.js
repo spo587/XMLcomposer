@@ -41,21 +41,33 @@ function Scale(fifthsCircle, quality) {
         }    
 }
 
-function NextStepDegree(currentScaleDegree, pinkyDegree) {
+function NextStepDegree(currentScaleDegree, pinkyDegree, level) {
     //for five finger position only. gives you the next scale degree, based on a current one. 
     // up a step, down a step, or repeat
     // pinkyDegree argument gives option of going outside tonic five-finger posish
     if (pinkyDegree == undefined)
         var pinkyDegree = 4
-    var thumbDegree = (pinkyDegree + 4)%7
+    var thumbDegree = (pinkyDegree - 4)
     var randNum = Math.random()
-    if (currentScaleDegree == thumbDegree) return randNum < 0.2 ? currentScaleDegree : currentScaleDegree+1;
-    else if (currentScaleDegree == pinkyDegree) return randNum < 0.2 ? currentScaleDegree : currentScaleDegree-1;
+    var randNum2 = Math.random()
+    if (level == 1 || level == undefined) var increment = 1
+    else if (level == 2) var increment = randNum2 < 0.25 ? 2 : 1
+    if (currentScaleDegree == thumbDegree) var nextDegree = randNum < 0.2 ? currentScaleDegree : currentScaleDegree+increment;
+    else if (currentScaleDegree == pinkyDegree) var nextDegree = randNum < 0.2 ? currentScaleDegree : currentScaleDegree-increment;
     else {
-        if (randNum <= 0.4) return currentScaleDegree-1;
-        else if (0.4<randNum<0.6) return currentScaleDegree;
-        else return currentScaleDegree + 1;
+        if (randNum <= 0.4) var nextDegree = currentScaleDegree-increment;
+        else if (0.4<randNum<0.6) var nextDegree = currentScaleDegree;
+        else var nextDegree = currentScaleDegree + increment;
     }
+    console.log(thumbDegree)
+    console.log(nextDegree)
+    if (thumbDegree <= nextDegree && nextDegree <= pinkyDegree) {return nextDegree}
+    else {
+        console.log('this happened')
+        return NextStepDegree(currentScaleDegree, pinkyDegree, level)
+    }
+
+    
 }
 
 function makeRhythms(numMeasures, beatsPer) {
@@ -91,7 +103,7 @@ function makeRhythms(numMeasures, beatsPer) {
     return rhythms
 }
 
-function makeSteps(rhythms_nested, pinkyDegree) {
+function makeSteps(rhythms_nested, pinkyDegree, level) {
     //combines the rhythms and generates a bunch of scale degrees to go along with,
     // returned in a nested array
     var numnotes = 0
@@ -100,7 +112,7 @@ function makeSteps(rhythms_nested, pinkyDegree) {
     }
     var notes = [0] // this ensures melody will always end on tonic. necessary?
     for (var i=1; i<numnotes; i++)
-        notes.push(NextStepDegree(notes[i-1], pinkyDegree))  //build simple array of scale degrees
+        notes.push(NextStepDegree(notes[i-1], pinkyDegree, level))  //build simple array of scale degrees
     notes.reverse()
     var notes_with_meter = []
     // put the steps in nested arrays, each inner array for a single measure
@@ -130,9 +142,9 @@ function changeEach(array_of_arrays, func) {
     return result
 }
 
-function stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality, pinkyDegree) {
+function stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality, pinkyDegree, level) {
     // makes scale degrees and applies the rhythm and tonality to them
-    if (RH_or_LH == 'LH' && octave == undefined) var octave = 2;
+    if (RH_or_LH == 'LH' && octave == undefined) var octave = 3;
     else if (octave == undefined) var octave = 4;
     var scale = new Scale(fifthsCircle, quality);
     var step = scale.step
@@ -140,7 +152,7 @@ function stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality, pinkyDeg
     function convertNumToScale(num) {
         return scale.stepNames[num]
     }
-    var notes = makeSteps(rhythms_nested, pinkyDegree)
+    var notes = makeSteps(rhythms_nested, pinkyDegree, level)
     console.log(notes)
     function convertScaleDegreeToKeyboardNumber(num){
         if (num > -1) {
@@ -153,17 +165,15 @@ function stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality, pinkyDeg
         if (num<0) return num+7
         else return num
     }
-    console.log(notes)
-    var notesPositive = changeEach(notes,convertToPositive)
-    console.log(notesPositive)   
+    var notesPositive = changeEach(notes,convertToPositive) 
     var readnotes = changeEach(notesPositive,convertNumToScale)
     return {noteNumbers: notesNumbers, readnotes: readnotes}
 }
 
-function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, quality, pinkyDegree) {
+function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, quality, pinkyDegree, level) {
     // returns an object with notes, rhythms, staff based on which hand, and accidentals for each note
     var rhythms_nested = makeRhythms(numMeasures, beatsPer);
-    var notes = stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality, pinkyDegree);
+    var notes = stepsWithScale(fifthsCircle,rhythms_nested, RH_or_LH, quality, pinkyDegree, level);
     var notesReadable = notes['readnotes']
     var notesNumbers = notes['noteNumbers']
     function shaveNote(note) {
@@ -194,21 +204,20 @@ function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, qual
     return result
 }
 
-function make_for_xml(fifthsCircle,numMeasures,beats,quality,pinkyDegree,beginning_or_not) {
+function make_for_xml(fifthsCircle,numMeasures,beats,quality,pinkyDegree, level, beginning_or_not) {
     // generates the xml string. see functions at the bottom of this document for how
     // it makes the xml objects
-    var notes_rhythms_LH = combineNotesRhythms(fifthsCircle+1,numMeasures/2,'LH',beats,quality,pinkyDegree)
-    var notes_rhythms_RH = combineNotesRhythms(fifthsCircle,numMeasures/2,'RH', beats,quality, pinkyDegree)
+    var notes_rhythms_LH = combineNotesRhythms(fifthsCircle,numMeasures/2,'LH',beats,quality,pinkyDegree, level)
+    var notes_rhythms_RH = combineNotesRhythms(fifthsCircle,numMeasures/2,'RH', beats,quality, pinkyDegree, level)
     function addNestedArrays(arr1, arr2) {
         for (var i=0; i<arr2.length; i++) {arr1.push(arr2[i])}
         return arr1
     }
-    var notes = addNestedArrays(notes_rhythms_RH['notes'],notes_rhythms_LH['notes'])
-    var rhythms = addNestedArrays(notes_rhythms_RH['rhythms'],notes_rhythms_LH['rhythms'])
-    var alters = addNestedArrays(notes_rhythms_RH['alters'],notes_rhythms_LH['alters'])
-    var octaves = addNestedArrays(notes_rhythms_RH['octaves'],notes_rhythms_LH['octaves'])
-    var staffs = addNestedArrays(notes_rhythms_RH['staff'],notes_rhythms_LH['staff'])
-    console.log(staffs)
+    var notes = addNestedArrays(notes_rhythms_LH['notes'],notes_rhythms_RH['notes'])
+    var rhythms = addNestedArrays(notes_rhythms_LH['rhythms'],notes_rhythms_RH['rhythms'])
+    var alters = addNestedArrays(notes_rhythms_LH['alters'],notes_rhythms_RH['alters'])
+    var octaves = addNestedArrays(notes_rhythms_LH['octaves'],notes_rhythms_RH['octaves'])
+    var staffs = addNestedArrays(notes_rhythms_LH['staff'],notes_rhythms_RH['staff'])
     var measureNumber = 0
     var firstNotes = []
     for (var i=0; i<notes[0].length; i++)
@@ -242,9 +251,9 @@ function xml_that_shit(full_piece) {
 }
 
 //console.log(make_for_xml(-2,4,4,'M'))
-var a = make_for_xml(-2,8,4,'M','beginning')
-var b = make_for_xml(-2,8,4,'M')
-console.log(xml_that_shit(a.concat(b)))
+// var a = make_for_xml(-2,8,4,'M','beginning')
+// var b = make_for_xml(-2,8,4,'M')
+// console.log(xml_that_shit(a.concat(b)))
 //console.log(xml_that_shit(make_for_xml(-2,4,4,'M')))
 
 // var m = make_for_xml(5,8,3)   
@@ -262,13 +271,19 @@ console.log(xml_that_shit(a.concat(b)))
 //here's the part that makes the link. i don't compeltely understand it.
 
 
+function concatMultipleArrays(arrays) {
+    var len = arguments.length;
+    result = arguments[0];
+    for (var i=1; i<len; i++)
+        result.concat(arguments[i])
+    return result
+}
 
 var genXML = function(){
     // the xml variable contains the string header to the xml file + the part generated in the code above
-    var a = make_for_xml(0,8,4,'M', 1,'beginning');
-    console.log(a);
-    var b = make_for_xml(0,8,3,'M');
-    console.log(a.concat(b))
+    var a = make_for_xml(0,8,4,'M', 4,2,'beginning');
+    //console.log(a);
+    var b = make_for_xml(-1,8,4,'m',4,2);
     var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' 
     + String(xml_that_shit(a.concat(b)))
     var encodedXML = encodeURIComponent(xml);               

@@ -206,9 +206,17 @@ function make_for_xml(fifthsCircle,numMeasures,beats,quality) {
         var measure = normalMeasure(measureNotes,'2')
         combined.push(measure)     
     }
+    return combined
+    //var doc = XMLDoc(combined)
+    //return renderHTML(doc)
+}
+
+function xml_that_shit(full_piece) {
     var doc = XMLDoc(combined)
     return renderHTML(doc)
 }
+
+console.log(make_for_xml(-2,8,8,'M'))
 
 // var m = make_for_xml(5,8,3)   
 
@@ -224,10 +232,12 @@ function make_for_xml(fifthsCircle,numMeasures,beats,quality) {
 
 //here's the part that makes the link. i don't compeltely understand it.
 
+
+
 var genXML = function(){
     // the xml variable contains the string header to the xml file + the part generated in the code above
     var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' 
-    + String(make_for_xml(-2,8,4,'M'))
+    + String(xml_that_shit(make_for_xml(-2,8,8,'M')))
     var encodedXML = encodeURIComponent(xml);               
     document.getElementById('downloadLink').setAttribute('href','data:text/xml,' + encodedXML);
 };
