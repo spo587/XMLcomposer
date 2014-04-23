@@ -268,7 +268,7 @@ function make_for_xml(level, beginning_or_not, pinkyDegDiff, pinkyDegree, fifths
 
 
 
-function xml_that_shit(full_piece) {
+function xml_object_to_string(full_piece) {
     var doc = XMLDoc(full_piece)
     return '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">'+
     renderHTML(doc)
@@ -277,8 +277,8 @@ function xml_that_shit(full_piece) {
 //console.log(make_for_xml(-2,4,4,'M'))
 // var a = make_for_xml(-2,8,4,'M','beginning')
 // var b = make_for_xml(-2,8,4,'M')
-// console.log(xml_that_shit(a.concat(b)))
-//console.log(xml_that_shit(make_for_xml(-2,4,4,'M')))
+// console.log(xml_object_to_string(a.concat(b)))
+//console.log(xml_object_to_string(make_for_xml(-2,4,4,'M')))
 
 // var m = make_for_xml(5,8,3)   
 
@@ -294,7 +294,7 @@ function xml_that_shit(full_piece) {
 
 //here's the part that makes the link. i don't compeltely understand it.
 
-var tes = xml_that_shit(make_for_xml(1,'beginning',0,4,0,'m',8,4))
+var tes = xml_object_to_string(make_for_xml(1,'beginning',0,4,0,'m',8,4))
 
 var parseXml;
 
@@ -313,17 +313,39 @@ console.log(test)
 var noteValues = test.getElementsByTagName('type')
 console.log(noteValues)
 for (var i=0; i<noteValues.length; i++) {
-    if (noteValues[i].childNode = 'whole'){
-        noteValues[i].childNode = 'half';
+    // var current = noteValues[i].childNodes[0].nodeValue; 
+    // //console.log(current);
+    // //console.log(typeof(current))
+    // var whole = 'whole';
+    // //console.log(whole)
+    // console.log(current == whole);
+    if (noteValues[i].childNodes[0].nodeValue == 'whole'){
+        console.log('boomtown')
+        noteValues[i].childNodes[0].nodeValue = 'half';
         var newel = xmlDoc.createElement('dot');
         noteValues[i].parentNode.appendChild(newel);
         console.log(noteValues[i].parentNode)
     }
 }
 
+// for (var i=0; i<noteValues.length; i++) {
+//     if (noteValues[i].childNodes[0] == 'whole'){
+//         console.log('boomtown')
+//     //     // noteValues[i].childNode = 'half';
+//     //     // var newel = xmlDoc.createElement('dot');
+//     //     // noteValues[i].parentNode.appendChild(newel);
+//     //     // console.log(noteValues[i].parentNode)
+//     // }
+//     }
+// }
+
 console.log(test)
 
+function xmlToString(xmlObject) {
+    return (new XMLSerializer()).serializeToString(xmlObject)
+}
 
+console.log(xmlToString(test))
 
 
 
@@ -341,9 +363,9 @@ var genXML = function(){
     console.log(5)
     console.log(n)
     var a = make_for_xml(n);
-    console.log(xml_that_shit(a))
+    console.log(xml_object_to_string(a))
     var b = make_for_xml(1);
-    var xml =  xml_that_shit(a)
+    var xml =  xml_object_to_string(a)
     var encodedXML = encodeURIComponent(xml);               
     document.getElementById('downloadLink').setAttribute('href', 'data:text/xml,' + encodedXML);
 };
