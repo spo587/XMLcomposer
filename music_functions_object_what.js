@@ -209,10 +209,10 @@ function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, qual
 function make_for_xml(level, beginning_or_not, pinkyDegDiff, pinkyDegree, fifthsCircle, quality, numMeasures,beats) {
     // generates the xml string. see functions at the bottom of this document for how
     // it makes the xml objects
-    var randNum = Math.random()
-    var randNum2 = Math.random()
-    var possFifthsLevOne = [0,1,-1]
-    var possibleFifths = [-3,-2,-1,0,1,2,3,4]
+    var randNum = Math.random();
+    var randNum2 = Math.random();
+    var possFifthsLevOne = [0,1,-1];
+    var possibleFifths = [-3,-2,-1,0,1,2,3,4];
     if (fifthsCircle == undefined) {
         if (level == 1) var fifthsCircle = possFifthsLevOne[Math.floor(Math.random()*possFifthsLevOne.length)];
         else var fifthsCircle = possibleFifths[Math.floor(Math.random() * possibleFifths.length)];
@@ -224,11 +224,11 @@ function make_for_xml(level, beginning_or_not, pinkyDegDiff, pinkyDegree, fifths
         if (level == 1) {
             var quality = fifthsCircle == -1 ? 'm' : undefined;
             var quality = fifthsCircle == 1 ? 'M' : undefined;
-            var quality = (fifthsCircle == 0 && randNum2 < 0.3) ? 'm' : 'M';
+            var quality = (quality == undefined && randNum2 < 0.3) ? 'm' : 'M';
         }
         else var quality = randNum2 < 0.3 ? 'm' : 'M';
     }
-    if (pinkyDegree == undefined) var pinkyDegree = 4
+    if (pinkyDegree == undefined) var pinkyDegree = 4;
 
     var notes_rhythms_LH = combineNotesRhythms(fifthsCircle,numMeasures/2,'LH',beats,quality,pinkyDegree, level)
     var notes_rhythms_RH = combineNotesRhythms(fifthsCircle,numMeasures/2,'RH', beats,quality, pinkyDegree+pinkyDegDiff, level)
@@ -270,7 +270,8 @@ function make_for_xml(level, beginning_or_not, pinkyDegDiff, pinkyDegree, fifths
 
 function xml_that_shit(full_piece) {
     var doc = XMLDoc(full_piece)
-    return renderHTML(doc)
+    return '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">'+
+    renderHTML(doc)
 }
 
 //console.log(make_for_xml(-2,4,4,'M'))
@@ -293,6 +294,38 @@ function xml_that_shit(full_piece) {
 
 //here's the part that makes the link. i don't compeltely understand it.
 
+var tes = xml_that_shit(make_for_xml(1,'beginning',0,4,0,'m',8,4))
+
+var parseXml;
+
+ 
+parseXml = function(xmlStr) {
+    parser=new DOMParser();
+    xmlDoc=parser.parseFromString(xmlStr,"text/xml")
+    return xmlDoc
+};
+    
+
+var test = parseXml(tes);
+console.log(typeof(test))
+console.log(test)
+
+var noteValues = test.getElementsByTagName('type')
+console.log(noteValues)
+for (var i=0; i<noteValues.length; i++) {
+    if (noteValues[i].childNode = 'whole'){
+        noteValues[i].childNode = 'half';
+        var newel = xmlDoc.createElement('dot');
+        noteValues[i].parentNode.appendChild(newel);
+        console.log(noteValues[i].parentNode)
+    }
+}
+
+console.log(test)
+
+
+
+
 
 function concatMultipleArrays(arrays) {
     var len = arguments.length;
@@ -304,13 +337,15 @@ function concatMultipleArrays(arrays) {
 
 var genXML = function(){
     // the xml variable contains the string header to the xml file + the part generated in the code above
-    var a = make_for_xml(1);
-    //console.log(a);
+    var n = document.forms['levelform']['level'].value
+    console.log(5)
+    console.log(n)
+    var a = make_for_xml(n);
+    console.log(xml_that_shit(a))
     var b = make_for_xml(1);
-    var xml = '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' 
-    + String(xml_that_shit(a))
+    var xml =  xml_that_shit(a)
     var encodedXML = encodeURIComponent(xml);               
-    document.getElementById('downloadLink').setAttribute('href','data:text/xml,' + encodedXML);
+    document.getElementById('downloadLink').setAttribute('href', 'data:text/xml,' + encodedXML);
 };
  
 document.getElementById("downloadLink").onclick = genXML;
@@ -452,7 +487,7 @@ function firstmeasure(keyFifths,beats,notes,numStaves) {
 }
 
 function normalMeasure(notes,number) {
-  console.log(renderHTML(tag('measure',notes,{'number':number})))
+  //console.log(renderHTML(tag('measure',notes,{'number':number})))
   return tag('measure',notes,{'number':number})
 }
 

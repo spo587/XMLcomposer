@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+if (window.XMLHttpRequest)
+  {
+    console.log('hi')
+  xhttp=new XMLHttpRequest();
+  }
+else // for IE 5/6
+  {
+  xhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xhttp.open("GET","http://localhost:8000/sr_76.xml",false);
+xhttp.send();
+xmlDoc=xhttp.responseXML;
+var x = xmlDoc.getElementsByTagName('note');
+console.log(x)
+console.log(xmlDoc)
+var noteValues = xmlDoc.getElementsByTagName('type')
+console.log(noteValues)
+
+for (var i=0; i<noteValues.length; i++) {
+    if (noteValues[i].childNode = 'whole'){
+        noteValues[i].childNode = 'half';
+        var newel = xmlDoc.createElement('dot');
+        noteValues[i].parentNode.appendChild(newel);
+        console.log(noteValues[i].parentNode)
+    }
+}
+
+
+newel=xmlDoc.createElement("dot");
+
+
+
+// x=xmlDoc.getElementsByTagName("book")[0];
+// x.appendChild(newel);
+</script>
+</body>
+</html>
