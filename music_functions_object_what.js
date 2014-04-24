@@ -59,11 +59,8 @@ function NextStepDegree(currentScaleDegree, pinkyDegree, level) {
         else if (0.4<randNum<0.6) var nextDegree = currentScaleDegree;
         else var nextDegree = currentScaleDegree + increment;
     }
-    console.log(thumbDegree)
-    console.log(nextDegree)
     if (thumbDegree <= nextDegree && nextDegree <= pinkyDegree) {return nextDegree}
     else {
-        console.log('this happened')
         return NextStepDegree(currentScaleDegree, pinkyDegree, level)
     }
 
@@ -191,7 +188,7 @@ function combineNotesRhythms(fifthsCircle, numMeasures, RH_or_LH, beatsPer, qual
     }
     function convertRhythm(rhythm) {
         if (rhythm == 1) return 'quarter';
-        else if (rhythm == 2) return 'half';
+        else if (rhythm == 2 || rhythm == 3) return 'half';
         else if (rhythm == 4) return 'whole';
     }
     var rhythmsConverted = changeEach(rhythms_nested,convertRhythm)
@@ -211,7 +208,7 @@ function make_for_xml(level, beginning_or_not, pinkyDegDiff, pinkyDegree, fifths
     // it makes the xml objects
     var randNum = Math.random();
     var randNum2 = Math.random();
-    var possFifthsLevOne = [0,1,-1];
+    var possFifthsLevOne = [-1,0,1];
     var possibleFifths = [-3,-2,-1,0,1,2,3,4];
     if (fifthsCircle == undefined) {
         if (level == 1) var fifthsCircle = possFifthsLevOne[Math.floor(Math.random()*possFifthsLevOne.length)];
@@ -220,14 +217,18 @@ function make_for_xml(level, beginning_or_not, pinkyDegDiff, pinkyDegree, fifths
     if (pinkyDegDiff == undefined) var pinkyDegDiff = 0;
     if (numMeasures == undefined) var numMeasures = 8;
     if (beats == undefined) var beats = randNum <0.3 ? 3: 4;
+    console.log(quality)
     if (quality == undefined) {
         if (level == 1) {
-            var quality = fifthsCircle == -1 ? 'm' : undefined;
-            var quality = fifthsCircle == 1 ? 'M' : undefined;
-            var quality = (quality == undefined && randNum2 < 0.3) ? 'm' : 'M';
+            var quality = fifthsCircle == -1 ? 'm' : quality;
+            var quality = (fifthsCircle == 1) ? 'M' : quality;
+            console.log(quality)
+            var quality = (fifthsCircle == 0 && randNum2 < 0.3) ? 'm' : quality;
+            var quality = (fifthsCircle == 0 && randNum2 > 0.3) ? 'M' : quality;
         }
         else var quality = randNum2 < 0.3 ? 'm' : 'M';
     }
+    console.log(quality)
     if (pinkyDegree == undefined) var pinkyDegree = 4;
 
     var notes_rhythms_LH = combineNotesRhythms(fifthsCircle,numMeasures/2,'LH',beats,quality,pinkyDegree, level)
@@ -359,11 +360,17 @@ function concatMultipleArrays(arrays) {
 
 var genXML = function(){
     // the xml variable contains the string header to the xml file + the part generated in the code above
-    var n = document.forms['levelform']['level'].value
-    console.log(5)
-    console.log(n)
-    var a = make_for_xml(n);
-    console.log(xml_object_to_string(a))
+    var level = document.forms['levelform']['level'].value == '' ? undefined : document.forms['levelform']['level'].value;
+    var b = 'b';
+    var fifthsCircle = document.forms['keyForm']['key'].value == '' ? undefined: document.forms['keyForm']['key'].value;
+    var v = document.forms['majorMinor']['quality'].value;
+    var quality = (v == 'm' || v == 'M') ? v : undefined
+    console.log(quality)
+    var numMeasures = document.forms['numMeasures']['measures'].value == '' ? undefined: document.forms['numMeasures']['measures'].value;
+    var beatsPer = document.forms['beatsPer']['beats'].value == '' ? undefined: document.forms['beatsPer']['beats'].value;
+
+
+    var a = make_for_xml(level,b,0,4,fifthsCircle,quality,numMeasures,beatsPer);
     var b = make_for_xml(1);
     var xml =  xml_object_to_string(a)
     var encodedXML = encodeURIComponent(xml);               
