@@ -267,14 +267,52 @@ function make_for_xml(level, beginning_or_not, pinkyDegDiff, pinkyDegree, fifths
     //return renderHTML(doc)
 }
 
+function combine_many_examples(level,num_examples) {
+    var x = make_for_xml(level);
+    for (var i=0; i<num_examples-1; i++) {
+        var z = x.concat(make_for_xml(level));
+        var x = z;
+    }
+    // var x = make_for_xml(1);
+    // var y = make_for_xml(1,'b',0,4,2,'M',6,3);
+    // var z = x.concat(y);
+    var y_string = renderHTML(XMLDoc(x));
+    console.log(y_string);
+    //line 275 is good, no double score-part tag
+    var y_xml_doc_object = parseXml(y_string)
+    console.log(y_xml_doc_object)
+    //line 278 is good too
+    var staves = y_xml_doc_object.getElementsByTagName('staves')
+    console.log(staves)
+    function removeElement(node) {
+        if (node.parentNode)
+            node.parentNode.removeChild(node);
+        }
+    for (var i=staves.length-1; i>0; i--) {
+        removeElement(staves[i])
+    }
+    // console.log(staves[1].parentNode);
+    // removeElement(staves[1]);
+    var w = xmlToString(y_xml_doc_object)
+    console.log(w)
+    //this line's good too
+    return w
 
+}
 
 function xml_object_to_string(full_piece) {
+    //takes an object (not quite an xml object??), returns a full xml string 
     var doc = XMLDoc(full_piece)
+    console.log(renderHTML(doc))
     return '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">'+
     renderHTML(doc)
 }
 
+
+function add_header_to_xml_string(xml_string) {
+    return '<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">'+
+    xml_string
+}
 //console.log(make_for_xml(-2,4,4,'M'))
 // var a = make_for_xml(-2,8,4,'M','beginning')
 // var b = make_for_xml(-2,8,4,'M')
@@ -301,6 +339,7 @@ var parseXml;
 
  
 parseXml = function(xmlStr) {
+    //returns an xml document object
     parser=new DOMParser();
     xmlDoc=parser.parseFromString(xmlStr,"text/xml")
     return xmlDoc
@@ -371,9 +410,10 @@ var genXML = function(){
 
 
     var a = make_for_xml(level,b,0,4,fifthsCircle,quality,numMeasures,beatsPer);
-    var b = make_for_xml(1);
-    var xml =  xml_object_to_string(a)
-    var encodedXML = encodeURIComponent(xml);               
+    var b = combine_many_examples(1,10);
+    var final_string = add_header_to_xml_string(b)
+
+    var encodedXML = encodeURIComponent(final_string);               
     document.getElementById('downloadLink').setAttribute('href', 'data:text/xml,' + encodedXML);
 };
  
